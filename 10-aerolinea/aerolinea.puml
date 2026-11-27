@@ -1,0 +1,148 @@
+@startuml aerolinea
+title Modelo 10 - Aerolínea\n(nivel avanzado: relación ternaria y múltiples FK)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor<<Entity>> #E1F5FE
+  BorderColor #555555
+}
+hide empty methods
+hide circle
+
+class Aeropuerto <<Entity>> {
+  id : Long [PK]
+  codigoIata : String [UQ][NN]
+  nombre : String [NN]
+  ciudad : String [NN]
+  pais : String [NN]
+}
+
+class ModeloAvion <<Entity>> {
+  id : Long [PK]
+  fabricante : String [NN]
+  nombre : String [UQ][NN]
+  numFilas : Integer [NN]
+  asientosPorFila : Integer [NN]
+  autonomiaKm : Integer
+}
+
+class Avion <<Entity>> {
+  id : Long [PK]
+  matricula : String [UQ][NN]
+  fechaFabricacion : LocalDate
+  activo : boolean [NN]
+}
+
+class Vuelo <<Entity>> {
+  id : Long [PK]
+  codigoVuelo : String [NN]
+  salidaProgramada : LocalDateTime [NN]
+  llegadaProgramada : LocalDateTime [NN]
+  puertaEmbarque : String
+  estado : EstadoVuelo [NN]
+}
+
+class Tripulante <<Entity>> {
+  id : Long [PK]
+  codigoEmpleado : String [UQ][NN]
+  nombre : String [NN]
+  apellidos : String [NN]
+  puesto : Puesto [NN]
+}
+
+class Pasajero <<Entity>> {
+  id : Long [PK]
+  numPasaporte : String [UQ][NN]
+  nombre : String [NN]
+  apellidos : String [NN]
+  nacionalidad : String [NN]
+  fechaNacimiento : LocalDate [NN]
+  email : String
+}
+
+class Reserva <<Entity>> {
+  id : Long [PK]
+  localizador : String [UQ][NN]
+  fechaReserva : LocalDateTime [NN]
+  emailContacto : String [NN]
+  importeTotal : BigDecimal [NN]
+}
+
+class Billete <<Entity>> {
+  id : Long [PK]
+  asiento : String
+  clase : ClaseBillete [NN]
+  precio : BigDecimal [NN]
+  facturado : boolean [NN]
+  embarcado : boolean [NN]
+}
+
+class Equipaje <<Entity>> {
+  id : Long [PK]
+  etiqueta : String [UQ][NN]
+  pesoKg : Double [NN]
+  tipo : TipoEquipaje [NN]
+}
+
+enum EstadoVuelo {
+  PROGRAMADO
+  RETRASADO
+  EMBARCANDO
+  EN_VUELO
+  ATERRIZADO
+  CANCELADO
+}
+
+enum Puesto {
+  COMANDANTE
+  COPILOTO
+  SOBRECARGO
+  AUXILIAR
+}
+
+enum ClaseBillete {
+  TURISTA
+  PREMIUM
+  BUSINESS
+}
+
+enum TipoEquipaje {
+  CABINA
+  BODEGA
+  ESPECIAL
+}
+
+ModeloAvion "1" -- "0..*" Avion : es de modelo <
+Vuelo "0..*" -- "1" Avion : operado por >
+Vuelo "0..*" -- "1" Aeropuerto : origen >
+Vuelo "0..*" -- "1" Aeropuerto : destino >
+Vuelo "0..*" -- "2..*" Tripulante : tripulación >
+
+Reserva "1" *-- "1..*" Billete : incluye >
+Billete "0..*" -- "1" Pasajero : para >
+Billete "0..*" -- "1" Vuelo : en >
+Billete "1" *-- "0..*" Equipaje : factura >
+
+Vuelo ..> EstadoVuelo
+Tripulante ..> Puesto
+Billete ..> ClaseBillete
+Equipaje ..> TipoEquipaje
+
+note right of Billete
+  Relación TERNARIA:
+  Reserva + Pasajero + Vuelo.
+  UNIQUE(vuelo_id, asiento)
+  UNIQUE(vuelo_id, pasajero_id)
+end note
+
+note left of Vuelo
+  UNIQUE(codigoVuelo, salidaProgramada):
+  el vuelo IB3456 sale todos los días,
+  cada día es un Vuelo distinto.
+end note
+
+legend right
+  [PK] clave primaria   [UQ] único   [NN] no nulo
+endlegend
+
+@enduml
